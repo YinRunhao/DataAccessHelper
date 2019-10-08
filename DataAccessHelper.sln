@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.852
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataAccessHelper", "DataAccessHelper\DataAccessHelper.csproj", "{8DE81211-00A1-4328-B491-7A3D20ED5D68}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Demo", "Demo\Demo.csproj", "{D5083E72-E3AC-40F7-A845-71862ECF225F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8DE81211-00A1-4328-B491-7A3D20ED5D68}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8DE81211-00A1-4328-B491-7A3D20ED5D68}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8DE81211-00A1-4328-B491-7A3D20ED5D68}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8DE81211-00A1-4328-B491-7A3D20ED5D68}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D5083E72-E3AC-40F7-A845-71862ECF225F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D5083E72-E3AC-40F7-A845-71862ECF225F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D5083E72-E3AC-40F7-A845-71862ECF225F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D5083E72-E3AC-40F7-A845-71862ECF225F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {2C659F3D-C81D-4063-9A97-E87EA9B6A22B}
+	EndGlobalSection
+EndGlobal
