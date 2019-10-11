@@ -65,6 +65,24 @@ namespace DataAccessHelper
         protected ThreadLocal<BaseDataAccessor> BaseAccessor = new ThreadLocal<BaseDataAccessor>(() => new BaseDataAccessor());
 
         /// <summary>
+        /// 更换数据库
+        /// </summary>
+        /// <param name="connectString">新的数据库连接字符串</param>
+        public void ChangeDataBase(string connectString)
+        {
+            // close
+            var accessor = BaseAccessor.Value;
+            if (!accessor.IsClose())
+            {
+                accessor.Close();
+            }
+            // new base accessor
+            accessor = new BaseDataAccessor();
+            accessor.GetDbContext().Database.GetDbConnection().ConnectionString = connectString;
+            BaseAccessor.Value = accessor;
+        }
+
+        /// <summary>
         /// 根据条件改变多个传入类型的映射数据表(此操作会导致当前操作的context释放掉，调用前需确保context的内容已保存)
         /// </summary>
         /// <param name="rules">映射规则</param>
