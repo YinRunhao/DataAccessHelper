@@ -20,17 +20,26 @@ namespace DataAccessHelper
         /// <summary>
         /// 需要重新映射的类
         /// </summary>
-        public Type MappingType { get; set; }
+        public Type MappingType
+        {
+            get; set;
+        }
 
         /// <summary>
         /// 映射功能提供者
         /// </summary>
-        public ITableMappable Mapper { get; set; }
+        public ITableMappable Mapper
+        {
+            get; set;
+        }
 
         /// <summary>
         /// 映射条件（供映射功能提供者生成表名）
         /// </summary>
-        public object Condition { get; set; }
+        public object Condition
+        {
+            get; set;
+        }
     }
 
     /// <summary>
@@ -41,12 +50,18 @@ namespace DataAccessHelper
         /// <summary>
         /// 实体类
         /// </summary>
-        public Type MappingType { get; private set; }
+        public Type MappingType
+        {
+            get; private set;
+        }
 
         /// <summary>
         /// 数据表名
         /// </summary>
-        public string TableName { get; private set; }
+        public string TableName
+        {
+            get; private set;
+        }
 
         public TableAcccessMapping(Type mappingType, string tableName)
         {
@@ -109,6 +124,13 @@ namespace DataAccessHelper
 
                     var context = accessor.GetDbContext();
 
+                    var types = context.Model.GetEntityTypes();
+                    foreach (var t in types)
+                    {
+                        Type refType = t.ClrType;
+                        
+                    }
+
                     foreach (var rule in rules)
                     {
                         // check changeable
@@ -149,7 +171,7 @@ namespace DataAccessHelper
             rule.Mapper =mapper;
             rule.Condition = condition;
 
-            List<TableMappingRule> param = new List<TableMappingRule>{ rule };
+            List<TableMappingRule> param = new List<TableMappingRule> { rule };
             var result = ChangeMappingTables(param);
             return result[0];
         }
