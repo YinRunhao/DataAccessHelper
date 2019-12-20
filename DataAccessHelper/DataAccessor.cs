@@ -108,48 +108,24 @@ namespace DataAccessHelper
             List<TableAcccessMapping> ret = new List<TableAcccessMapping>();
             if (rules != null)
             {
-                lock (LockObj)
+                // close old accessor
+                var accessor = BaseAccessor.Value;
+                if (!accessor.IsClose())
                 {
-                    // close
-                    var accessor = BaseAccessor.Value;
-                    if (!accessor.IsClose())
-                    {
-                        accessor.Close();
-                    }
-                    // new base accessor
-                    accessor = new BaseDataAccessor();
-
-                    // set new mapping
+                    accessor.Close();
+                }
+                lock(LockObj)
+                {
+                    // new accessor
+                    accessor = new BaseDataAccessor(rules);
+                    // notity new mapping
                     DynamicModelCacheKeyFactory.ChangeTableMapping();
-
-                    var context = accessor.GetDbContext();
-
-                    var types = context.Model.GetEntityTypes();
-                    foreach (var t in types)
-                    {
-                        Type refType = t.ClrType;
-                        
-                    }
-
-                    foreach (var rule in rules)
-                    {
-                        // check changeable
-                        var mapping = GetTableName(rule.MappingType, accessor);
-
-                        // get table name
-                        string tableNm = rule.Mapper.GetMappingTableName(rule.MappingType, rule.Condition);
-                        if (context.Model.FindEntityType(rule.MappingType)?.Relational() is RelationalEntityTypeAnnotations relational)
-                        {
-                            relational.TableName = tableNm;
-                        }
-                        else
-                        {
-                            tableNm = "";
-                        }
-                        ret.Add(new TableAcccessMapping(rule.MappingType, tableNm));
-                    }
-                    // set value
-                    BaseAccessor.Value = accessor;
+                    this.BaseAccessor.Value = accessor;
+                }
+                foreach(var rule in rules)
+                {
+                    var mapping = GetTableName(rule.MappingType, accessor);
+                    ret.Add(mapping);
                 }
             }
 
@@ -166,7 +142,7 @@ namespace DataAccessHelper
         /// <returns>改变后的数据表映射</returns>
         public TableAcccessMapping ChangeMappingTable(Type type, ITableMappable mapper, object condition)
         {
-            TableMappingRule rule = default;
+            TableMappingRule rule = default(TableMappingRule);
             rule.MappingType = type;
             rule.Mapper =mapper;
             rule.Condition = condition;
@@ -189,7 +165,7 @@ namespace DataAccessHelper
             var models = context.Model.GetEntityTypes();
             foreach (var model in models)
             {
-                string table = model.Relational().TableName;
+                string table = model.GetTableName();
                 Type type = model.ClrType;
                 TableAcccessMapping mapping = new TableAcccessMapping(type, table);
                 ret.Add(mapping);
@@ -211,7 +187,7 @@ namespace DataAccessHelper
 
             if (model != null)
             {
-                string table = model.Relational().TableName;
+                string table = model.GetTableName();
                 return new TableAcccessMapping(mappingType, table);
             }
             else
@@ -472,7 +448,7 @@ namespace DataAccessHelper
 
             if (model != null)
             {
-                string table = model.Relational().TableName;
+                string table = model.GetTableName();
                 return new TableAcccessMapping(mappingType, table);
             }
             else

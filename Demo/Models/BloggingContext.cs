@@ -1,5 +1,6 @@
 ﻿using System;
 using DataAccessHelper;
+using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
@@ -8,17 +9,19 @@ namespace Demo.Models
 {
     public partial class BloggingContext : DbContext
     {
+        public virtual DbSet<Blog> Blog { get; set; }
+        public virtual DbSet<Post> Post { get; set; }
+
+        private ICollection<TableMappingRule> m_TableMappingRule;
+
         public BloggingContext()
         {
         }
 
-        public BloggingContext(DbContextOptions<BloggingContext> options)
-            : base(options)
+        public BloggingContext(ICollection<TableMappingRule> rules)
         {
+            this.m_TableMappingRule = rules;
         }
-
-        public virtual DbSet<Blog> Blog { get; set; }
-        public virtual DbSet<Post> Post { get; set; }
 
         private static string ConnectString
         {
@@ -42,8 +45,6 @@ namespace Demo.Models
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.HasAnnotation("ProductVersion", "2.2.6-servicing-10079");
-
             modelBuilder.Entity<Blog>(entity =>
             {
                 entity.HasKey(e => e.BlogId);
@@ -75,6 +76,16 @@ namespace Demo.Models
                     .WithMany(b => b.Posts)
                     .HasForeignKey(e => e.BlogId);
             });
+
+            if (m_TableMappingRule != null)
+            {
+                string tableNm = "";
+                foreach (var rule in m_TableMappingRule)
+                {
+                    tableNm = rule.Mapper.GetMappingTableName(rule.MappingType, rule.Condition);
+                    modelBuilder.Entity(rule.MappingType).ToTable(tableNm);
+                }
+            }
         }
     }
 }

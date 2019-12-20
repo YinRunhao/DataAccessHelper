@@ -48,6 +48,15 @@ namespace DataAccessHelper
             context = (DbContext)Activator.CreateInstance(contextType);
         }
 
+        public BaseDataAccessor(ICollection<TableMappingRule> rules)
+        {
+            if (contextType == null)
+            {
+                throw new ArgumentNullException("You have not set context type");
+            }
+            context = (DbContext)Activator.CreateInstance(contextType, rules);
+        }
+
         /// <summary>
         /// 是否已关闭
         /// </summary>
@@ -275,8 +284,8 @@ namespace DataAccessHelper
         public async Task<List<T>> GetPageListAsync<T, Tkey>(int pageSize, int pageIdx, Expression<Func<T, bool>> expression, Func<T, Tkey> orderExpression) where T : class
         {
             var datas = this.GetMany<T>(expression);
-            var result = datas.OrderBy(orderExpression).Skip(pageSize * (pageIdx - 1)).Take(pageSize).ToAsyncEnumerable();
-            var ret = await result.ToList();
+            var result = datas.OrderBy(orderExpression).Skip(pageSize * (pageIdx - 1)).Take(pageSize).AsQueryable();
+            var ret = await result.ToListAsync();
             return ret;
         }
 
