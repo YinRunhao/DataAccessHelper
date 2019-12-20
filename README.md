@@ -47,7 +47,48 @@
 ```
 BaseDataAccessor.SetContextType(typeof(BloggingContext));
 ```
-### 4.正式使用
+### 4.向你的DbContext类添加一些代码
+```
+    public partial class BloggingContext : DbContext
+    {
+        public virtual DbSet<Blog> Blog { get; set; }
+        public virtual DbSet<Post> Post { get; set; }
+
+        // 增加映射规则成员变量
+        private ICollection<TableMappingRule> m_TableMappingRule;
+
+        public BloggingContext()
+        {
+        }
+
+        // 可以选择通过构造方法传入
+        public BloggingContext(ICollection<TableMappingRule> rules)
+        {
+            this.m_TableMappingRule = rules;
+        }
+
+        ...
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<Blog>(entity =>
+            {
+                entity.HasKey(e => e.BlogId);
+
+                entity.ToTable("Blog");
+
+                entity.Property(e => e.BlogId).ValueGeneratedNever();
+
+                entity.Property(e => e.Url).HasColumnType("VARCHAR (1024)");
+            });
+
+            ...
+            // 在OnModelCreating方法结束前调用扩展方法ChangeTableMapping，传入数据表映射规则，若规则为空则不会改变任何数据表映射
+            modelBuilder.ChangeTableMapping(m_TableMappingRule);
+        }
+    }
+```
+### 5.正式使用
 ```
     // 使用示例
     static void TestChangeTable(DataAccessor dal, ITableMappable mapper)

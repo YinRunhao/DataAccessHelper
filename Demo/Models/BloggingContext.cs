@@ -76,16 +76,8 @@ namespace Demo.Models
                     .WithMany(b => b.Posts)
                     .HasForeignKey(e => e.BlogId);
             });
-
-            if (m_TableMappingRule != null)
-            {
-                string tableNm = "";
-                foreach (var rule in m_TableMappingRule)
-                {
-                    tableNm = rule.Mapper.GetMappingTableName(rule.MappingType, rule.Condition);
-                    modelBuilder.Entity(rule.MappingType).ToTable(tableNm);
-                }
-            }
+            // step 3 Call Extension method
+            modelBuilder.ChangeTableMapping(m_TableMappingRule);
         }
     }
 }
