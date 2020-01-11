@@ -13,71 +13,23 @@ using Microsoft.EntityFrameworkCore.Storage;
 namespace DataAccessHelper
 {
     /// <summary>
-    /// 数据表映射规则结构体
-    /// </summary>
-    public struct TableMappingRule
-    {
-        /// <summary>
-        /// 需要重新映射的类
-        /// </summary>
-        public Type MappingType
-        {
-            get; set;
-        }
-
-        /// <summary>
-        /// 映射功能提供者
-        /// </summary>
-        public ITableMappable Mapper
-        {
-            get; set;
-        }
-
-        /// <summary>
-        /// 映射条件（供映射功能提供者生成表名）
-        /// </summary>
-        public object Condition
-        {
-            get; set;
-        }
-    }
-
-    /// <summary>
-    /// 数据表映射结构体
-    /// </summary>
-    public struct TableAcccessMapping
-    {
-        /// <summary>
-        /// 实体类
-        /// </summary>
-        public Type MappingType
-        {
-            get; private set;
-        }
-
-        /// <summary>
-        /// 数据表名
-        /// </summary>
-        public string TableName
-        {
-            get; private set;
-        }
-
-        public TableAcccessMapping(Type mappingType, string tableName)
-        {
-            this.MappingType = mappingType;
-            this.TableName = tableName;
-        }
-    }
-
-    /// <summary>
     /// .NET EF Core框架帮助类
     /// </summary>
     public class DataAccessor : IDataAccessor
     {
         private static object LockObj = new object();
 
-        protected ThreadLocal<BaseDataAccessor> BaseAccessor = new ThreadLocal<BaseDataAccessor>(() => new BaseDataAccessor());
+        private ThreadLocal<BaseDataAccessor> BaseAccessor = new ThreadLocal<BaseDataAccessor>(() => new BaseDataAccessor());
+
+        /// <summary>
+        /// 使用该类前必须调用此方法指明DbContext类型，若传入的类型不是继承于DbContext，将冒ArgumentException
+        /// </summary>
+        /// <param name="t">Context类型</param>
+        /// <exception cref="ArgumentException">context 类型设置错误</exception>
+        public static void SetContextType(Type t)
+        {
+            BaseDataAccessor.SetContextType(t);
+        }
 
         /// <summary>
         /// 更换数据库
@@ -103,9 +55,9 @@ namespace DataAccessHelper
         /// <param name="rules">映射规则</param>
         /// <exception cref="ArgumentException">type类型不支持</exception>
         /// <returns>改变后的数据表映射</returns>
-        public List<TableAcccessMapping> ChangeMappingTables(List<TableMappingRule> rules)
+        public List<TableAccessMapping> ChangeMappingTables(List<TableMappingRule> rules)
         {
-            List<TableAcccessMapping> ret = new List<TableAcccessMapping>();
+            List<TableAccessMapping> ret = new List<TableAccessMapping>();
             if (rules != null)
             {
                 // close old accessor
@@ -140,7 +92,7 @@ namespace DataAccessHelper
         /// <param name="condition">改变条件</param>
         /// <exception cref="ArgumentException">type类型不支持</exception>
         /// <returns>改变后的数据表映射</returns>
-        public TableAcccessMapping ChangeMappingTable(Type type, ITableMappable mapper, object condition)
+        public TableAccessMapping ChangeMappingTable(Type type, ITableMappable mapper, object condition)
         {
             TableMappingRule rule = default(TableMappingRule);
             rule.MappingType = type;
@@ -156,18 +108,18 @@ namespace DataAccessHelper
         /// 获取所有实体类的数据表映射结构体
         /// </summary>
         /// <returns>映射关系集合</returns>
-        public List<TableAcccessMapping> GetTableNames()
+        public List<TableAccessMapping> GetTableNames()
         {
             BaseDataAccessor helper = BaseAccessor.Value;
             var context = helper.GetDbContext();
 
-            List<TableAcccessMapping> ret = new List<TableAcccessMapping>();
+            List<TableAccessMapping> ret = new List<TableAccessMapping>();
             var models = context.Model.GetEntityTypes();
             foreach (var model in models)
             {
                 string table = model.GetTableName();
                 Type type = model.ClrType;
-                TableAcccessMapping mapping = new TableAcccessMapping(type, table);
+                TableAccessMapping mapping = new TableAccessMapping(type, table);
                 ret.Add(mapping);
             }
 
@@ -179,7 +131,7 @@ namespace DataAccessHelper
         /// </summary>
         /// <param name="mappingType">实体类性</param>
         /// <returns>传入实体类的映射关系</returns>
-        public TableAcccessMapping GetTableName(Type mappingType)
+        public TableAccessMapping GetTableName(Type mappingType)
         {
             BaseDataAccessor helper = BaseAccessor.Value;
             var context = helper.GetDbContext();
@@ -188,7 +140,7 @@ namespace DataAccessHelper
             if (model != null)
             {
                 string table = model.GetTableName();
-                return new TableAcccessMapping(mappingType, table);
+                return new TableAccessMapping(mappingType, table);
             }
             else
             {
@@ -441,7 +393,7 @@ namespace DataAccessHelper
             return BaseAccessor.Value.Update<T>(model);
         }
 
-        private TableAcccessMapping GetTableName(Type mappingType, BaseDataAccessor helper)
+        private TableAccessMapping GetTableName(Type mappingType, BaseDataAccessor helper)
         {
             var context = helper.GetDbContext();
             var model = context.Model.FindEntityType(mappingType);
@@ -449,7 +401,7 @@ namespace DataAccessHelper
             if (model != null)
             {
                 string table = model.GetTableName();
-                return new TableAcccessMapping(mappingType, table);
+                return new TableAccessMapping(mappingType, table);
             }
             else
             {

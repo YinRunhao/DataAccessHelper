@@ -45,7 +45,7 @@
 ### 3.设置Context类型
 在程序初始化时调用以下语句设置你程序中的context类型
 ```
-BaseDataAccessor.SetContextType(typeof(BloggingContext));
+DataAccessor.SetContextType(typeof(BloggingContext));
 ```
 ### 4.向你的DbContext类添加一些代码
 ```

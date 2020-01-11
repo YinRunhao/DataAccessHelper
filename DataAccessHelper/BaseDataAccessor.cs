@@ -13,7 +13,7 @@ namespace DataAccessHelper
     /// <summary>
     /// .NET EF Core框架帮助基础类
     /// </summary>
-    public class BaseDataAccessor : IDataAccessor
+    internal class BaseDataAccessor : IDataAccessor
     {
         private DbContext context;
         private static Type contextType = null;

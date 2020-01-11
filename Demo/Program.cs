@@ -36,7 +36,7 @@ namespace Demo
             // step 1: Set connect string
             BloggingContext.SetConnectString(conStr);
             // step 2: Set db context type
-            BaseDataAccessor.SetContextType(typeof(BloggingContext));
+            DataAccessor.SetContextType(typeof(BloggingContext));
         }
 
         static void TestTableName(DataAccessor dal, ITableMappable mapper)
