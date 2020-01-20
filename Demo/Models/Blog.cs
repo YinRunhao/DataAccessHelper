@@ -15,5 +15,10 @@ namespace Demo.Models
         public long Rating { get; set; }
 
         public ICollection<Post> Posts { get; set; }
+
+        public override string ToString()
+        {
+            return $"{{ID: {BlogId}, URL: {Url}, Rating: {Rating}}}";
+        }
     }
 }

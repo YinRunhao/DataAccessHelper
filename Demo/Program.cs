@@ -20,8 +20,9 @@ namespace Demo
 
             TestChangeTable(dal, mapper);
 
-            // Basic usage
             BasicUsage(dal);
+
+            TestChangeDb(dal, mapper);
 
             dal.Close();
             Console.ReadKey();
@@ -73,25 +74,64 @@ namespace Demo
 
         static void BasicUsage(DataAccessor dal)
         {
+            Console.WriteLine("\nTest BasicUsage");
             long newId = 2;
             // Add
+            Console.WriteLine("Test Add");
+            Console.WriteLine("Org data:");
+            var list = dal.GetAll<Blog>().ToList();
+            PrintData(list);
             Blog newData = new Blog { BlogId = newId, Rating = 666, Url = "https://blog.test.com" };
             dal.AddRecord(newData);
             dal.Save();
-
-            // select
-            Blog target = dal.GetByID<Blog>(newId);
-            //Blog target = dal.GetMany<Blog>(s=>s.BlogId == newId).FirstOrDefault();
-            //Blog target = dal.GetAll<Blog>().Where(s=>s.BlogId == newId).FirstOrDefault();
+            Console.WriteLine("New data:");
+            list = dal.GetAll<Blog>().ToList();
+            PrintData(list);
+            Console.WriteLine();
 
             // update
+            Blog target = dal.GetByID<Blog>(newId);
+            Console.WriteLine("Test Update");
             target.Url = "https://newurl.test.com";
             dal.Update(target);
             dal.Save();
+            list = dal.GetAll<Blog>().ToList();
+            PrintData(list);
+            Console.WriteLine();
 
             // delete
+            Console.WriteLine("Test Delete");
             dal.Delete(target);
             dal.Save();
+            list = dal.GetAll<Blog>().ToList();
+            PrintData(list);
+            Console.WriteLine();
+        }
+
+        static void TestChangeDb(DataAccessor dal, ITableMappable mapper)
+        {
+            Console.WriteLine("\nTest change Db");
+            string dbPath = Directory.GetCurrentDirectory();
+            dbPath = Path.Combine(dbPath, "Blogging_1.db");
+            string conStr = $"Data Source={dbPath}";
+
+            Console.WriteLine("Org Data:");
+            var list = dal.GetAll<Blog>().ToList();
+            PrintData(list);
+
+            dal.ChangeDataBase(conStr);
+
+            Console.WriteLine("Changed Data:");
+            list = dal.GetAll<Blog>().ToList();
+            PrintData(list);
+        }
+
+        static void PrintData<T>(List<T> arr)
+        {
+            foreach(T item in arr)
+            {
+                Console.WriteLine(item);
+            }
         }
     }
 

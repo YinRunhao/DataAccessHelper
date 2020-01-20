@@ -15,8 +15,11 @@ namespace DataAccessHelper
     /// <summary>
     /// .NET EF Core框架帮助类
     /// </summary>
-    public class DataAccessor : IDataAccessor
+    public class DataAccessor : IDataAccessor, IMappingMutable
     {
+        /// <summary>
+        /// 更改映射时的互斥锁
+        /// </summary>
         private static object LockObj = new object();
 
         private ThreadLocal<BaseDataAccessor> BaseAccessor = new ThreadLocal<BaseDataAccessor>(() => new BaseDataAccessor());
@@ -32,10 +35,10 @@ namespace DataAccessHelper
         }
 
         /// <summary>
-        /// 更换数据库
+        /// 更换数据库, 数据表映射使用默认映射规则
         /// </summary>
-        /// <param name="connectString">新的数据库连接字符串</param>
-        public void ChangeDataBase(string connectString)
+        /// <param name="connStr">新的数据库连接字符串</param>
+        public void ChangeDataBase(string connStr)
         {
             // close
             var accessor = BaseAccessor.Value;
@@ -45,8 +48,33 @@ namespace DataAccessHelper
             }
             // new base accessor
             accessor = new BaseDataAccessor();
-            accessor.GetDbContext().Database.GetDbConnection().ConnectionString = connectString;
+            accessor.GetDbContext().Database.GetDbConnection().ConnectionString = connStr;
             BaseAccessor.Value = accessor;
+        }
+
+        /// <summary>
+        /// 更换数据库, 数据表映射使用传入的映射规则
+        /// </summary>
+        /// <param name="connStr">新的数据库连接字符串</param>
+        /// <param name="rules">映射规则</param>
+        /// <exception cref="ArgumentException">type类型不支持</exception>
+        public void ChangeDataBase(string connStr, List<TableMappingRule> rules)
+        {
+            // close
+            var accessor = BaseAccessor.Value;
+            if (!accessor.IsClose())
+            {
+                accessor.Close();
+            }
+            lock(LockObj)
+            {
+                // new base accessor
+                accessor = new BaseDataAccessor(rules);
+                // notity new mapping
+                DynamicModelCacheKeyFactory.ChangeTableMapping();
+                accessor.GetDbContext().Database.GetDbConnection().ConnectionString = connStr;
+                BaseAccessor.Value = accessor;
+            }
         }
 
         /// <summary>
