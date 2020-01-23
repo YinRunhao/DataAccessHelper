@@ -5,7 +5,7 @@ using System.Text;
 namespace DataAccessHelper
 {
     /// <summary>
-    /// 可映射数据表
+    /// 数据表映射规则接口
     /// </summary>
     public interface ITableMappable
     {
