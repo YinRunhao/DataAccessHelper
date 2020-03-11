@@ -47,7 +47,8 @@
 ```
 DataAccessor.SetContextType(typeof(BloggingContext));
 ```
-### 4.向你的DbContext类添加一些代码
+### 4.(可选)向你的DbContext类添加一些代码
+如果你的在程序中需要用到**动态切换表映射或者动态改变数据库**，这一步则不能跳过；否则可以忽略此步骤。
 ```
     public partial class BloggingContext : DbContext
     {
@@ -61,7 +62,7 @@ DataAccessor.SetContextType(typeof(BloggingContext));
         {
         }
 
-        // 可以选择通过构造方法传入
+        // 通过构造方法传入
         public BloggingContext(ICollection<TableMappingRule> rules)
         {
             this.m_TableMappingRule = rules;
