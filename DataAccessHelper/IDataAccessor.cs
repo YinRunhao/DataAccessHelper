@@ -65,7 +65,7 @@ namespace DataAccessHelper
         T Add<T>(T model) where T : class;
 
         /// <summary>
-        /// 插入数据
+        /// 插入数据，并保存
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="model"></param>
@@ -73,7 +73,7 @@ namespace DataAccessHelper
         Task<T> AddAsync<T>(T model) where T : class;
 
         /// <summary>
-        /// 向上下文增加记录，但不保存，需要手动调用Commit
+        /// 向上下文增加记录，但不保存，需要手动调用Save
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="model"></param>
