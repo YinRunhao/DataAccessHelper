@@ -25,7 +25,7 @@ namespace DataAccessHelper
         /// <exception cref="ArgumentException">context 类型设置错误</exception>
         public static void SetContextType(Type t)
         {
-            if (t.BaseType != typeof(DbContext))
+            if (!t.IsSubclassOf(typeof(DbContext)))
             {
                 throw new ArgumentException("ContextType must inherits from DbContext");
             }
@@ -332,11 +332,13 @@ namespace DataAccessHelper
             cmd.CommandType = System.Data.CommandType.StoredProcedure;
             cmd.CommandText = procName;
             cmd.Parameters.AddRange(parameters);
-            context.Database.OpenConnection();
+            //context.Database.OpenConnection();
+            connection.Open();
             reader = cmd.ExecuteReader();
             table = ReaderToDataTable(reader);
             reader.Close();
-            context.Database.CloseConnection();
+            //context.Database.CloseConnection();
+            connection.Close();
 
             return table;
         }
@@ -357,11 +359,13 @@ namespace DataAccessHelper
             cmd.CommandType = System.Data.CommandType.StoredProcedure;
             cmd.CommandText = procName;
             cmd.Parameters.AddRange(parameters);
-            await context.Database.OpenConnectionAsync();
+            //await context.Database.OpenConnectionAsync();
+            await connection.OpenAsync();
             reader = await cmd.ExecuteReaderAsync();
             table = ReaderToDataTable(reader);
             reader.Close();
-            context.Database.CloseConnection();
+            //context.Database.CloseConnection();
+            connection.Close();
 
             return table;
         }
