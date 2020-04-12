@@ -327,7 +327,12 @@ namespace DataAccessHelper
             var connection = context.Database.GetDbConnection();
             DbDataReader reader = null;
             DataTable table = null;
-            DbCommand cmd = connection.CreateCommand();
+            using DbCommand cmd = connection.CreateCommand();
+            IDbContextTransaction tran = context.Database.CurrentTransaction;
+            if (tran != null)
+            {
+                cmd.Transaction = tran.GetDbTransaction();
+            }
 
             cmd.CommandType = System.Data.CommandType.StoredProcedure;
             cmd.CommandText = procName;
@@ -336,7 +341,7 @@ namespace DataAccessHelper
             reader = cmd.ExecuteReader();
             table = ReaderToDataTable(reader);
             reader.Close();
-            context.Database.CloseConnection();
+            //context.Database.CloseConnection();
 
             return table;
         }
@@ -352,7 +357,12 @@ namespace DataAccessHelper
             var connection = context.Database.GetDbConnection();
             DbDataReader reader = null;
             DataTable table = null;
-            DbCommand cmd = connection.CreateCommand();
+            using DbCommand cmd = connection.CreateCommand();
+            IDbContextTransaction tran = context.Database.CurrentTransaction;
+            if(tran != null)
+            {
+                cmd.Transaction = tran.GetDbTransaction();
+            }
 
             cmd.CommandType = System.Data.CommandType.StoredProcedure;
             cmd.CommandText = procName;
@@ -361,7 +371,7 @@ namespace DataAccessHelper
             reader = await cmd.ExecuteReaderAsync();
             table = ReaderToDataTable(reader);
             reader.Close();
-            context.Database.CloseConnection();
+            //context.Database.CloseConnection();
 
             return table;
         }
