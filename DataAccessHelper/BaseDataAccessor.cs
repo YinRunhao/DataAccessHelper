@@ -242,6 +242,21 @@ namespace DataAccessHelper
         }
 
         /// <summary>
+        /// 根据主键更新指定字段，使用时需要注意EFCore的仓储机制可能会使数据库和缓存仓的数据不一致。
+        /// </summary>
+        /// <typeparam name="T">映射类</typeparam>
+        /// <typeparam name="TProperty">字段类型</typeparam>
+        /// <param name="model">更新的实体</param>
+        /// <param name="property">要更新的属性, VisualStudio在这里有Bug, 不能智能显示类型属性, 但不影响使用</param>
+        /// <returns></returns>
+        public bool Update<T, TProperty>(T model, Expression<Func<T, TProperty>> property) where T : class
+        {
+            var entity = context.Entry<T>(model);
+            entity.Property(property).IsModified = true;
+            return true;
+        }
+
+        /// <summary>
         /// 根据某个字段的值进行排序
         /// </summary>
         /// <typeparam name="T">排序后获得的集合的类型</typeparam>
@@ -359,7 +374,7 @@ namespace DataAccessHelper
             DataTable table = null;
             using DbCommand cmd = connection.CreateCommand();
             IDbContextTransaction tran = context.Database.CurrentTransaction;
-            if(tran != null)
+            if (tran != null)
             {
                 cmd.Transaction = tran.GetDbTransaction();
             }

@@ -39,7 +39,8 @@ namespace Demo.Models
             {
                 // setp 0 : Replace Service
                 optionsBuilder.UseSqlite(ConnectString)
-                    .ReplaceService<IModelCacheKeyFactory, DynamicModelCacheKeyFactory>();
+                    .ReplaceService<IModelCacheKeyFactory, DynamicModelCacheKeyFactory>()
+                    .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
             }
         }
 
