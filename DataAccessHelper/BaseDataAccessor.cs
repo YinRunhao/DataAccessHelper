@@ -85,7 +85,7 @@ namespace DataAccessHelper
         /// <returns></returns>
         public IQueryable<T> GetAll<T>() where T : class
         {
-            var result = context.Set<T>().Where(s => 1 == 1);
+            var result = context.Set<T>().Where(s => true);
             return result;
         }
 
@@ -188,43 +188,56 @@ namespace DataAccessHelper
         /// <typeparam name="T"></typeparam>
         /// <param name="model"></param>
         /// <returns></returns>
-        public bool AddRecord<T>(T model) where T : class
+        public void AddRecord<T>(T model) where T : class
         {
-            bool ret = false;
-            try
+            if (model != null)
             {
-                if (model != null)
-                {
-                    context.Set<T>().Add(model);
-                    ret = true;
-                }
-                else
-                    ret = false;
+                context.Set<T>().Add(model);
             }
-            catch (Exception)
-            {
-                ret = false;
-            }
-            return ret;
         }
 
         /// <summary>
-        /// 删除操作
+        /// 按主键标记实体删除(即使传入的实体不是被追踪的实体，同主键的追踪实体依然会标记删除删除)
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="model"></param>
         /// <returns></returns>
-        public bool Delete<T>(T model) where T : class
+        public void Delete<T>(T model) where T : class
         {
             try
             {
-                context.Set<T>().Attach(model);
-                context.Set<T>().Remove(model);
-                return true;
+                var entity = context.Remove(model);
             }
-            catch (Exception)
+            catch(InvalidOperationException e)
             {
-                return false;
+                // 若在追踪列表中已经存在另一个实体和该实体有相同主键(但不是同一个)
+                // 则找到追踪列表里的实体把它标记为删除
+                Type modelType = typeof(T);
+                var key = context.Model.FindEntityType(modelType).FindPrimaryKey();                
+                if(key == null)
+                {
+                    throw e;
+                }
+                else
+                {
+                    // 找主键
+                    var props = key.Properties;
+                    object[] param = new object[props.Count];
+                    int idx = 0;
+                    foreach(var p in props)
+                    {
+                        var clrProp = modelType.GetProperty(p.Name);
+                        var val = clrProp.GetValue(model);
+                        param[idx] = val;
+                        idx++;
+                    }
+                    // 用主键找实体，标记为删除
+                    var cacheModel = context.Set<T>().Find(param);
+                    if(cacheModel!= null)
+                    {
+                        context.Remove(cacheModel);
+                    }
+                }
             }
         }
 
@@ -234,11 +247,10 @@ namespace DataAccessHelper
         /// <typeparam name="T"></typeparam>
         /// <param name="model"></param>
         /// <returns></returns>
-        public bool Update<T>(T model) where T : class
+        public void Update<T>(T model) where T : class
         {
             var entity = context.Entry<T>(model);
-            entity.State = EntityState.Modified; //System.Data.Entity.EntityState.Modified;
-            return true;
+            entity.State = EntityState.Modified;
         }
 
         /// <summary>
@@ -249,11 +261,10 @@ namespace DataAccessHelper
         /// <param name="model">更新的实体</param>
         /// <param name="property">要更新的属性, VisualStudio在这里有Bug, 不能智能显示类型属性, 但不影响使用</param>
         /// <returns></returns>
-        public bool Update<T, TProperty>(T model, Expression<Func<T, TProperty>> property) where T : class
+        public void Update<T>(T model, Expression<Func<T, object>> property) where T : class
         {
             var entity = context.Entry<T>(model);
             entity.Property(property).IsModified = true;
-            return true;
         }
 
         /// <summary>

@@ -7,6 +7,7 @@ using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Storage;
 
@@ -66,7 +67,7 @@ namespace DataAccessHelper
             {
                 accessor.Close();
             }
-            lock(LockObj)
+            lock (LockObj)
             {
                 // new base accessor
                 accessor = new BaseDataAccessor(rules);
@@ -94,7 +95,7 @@ namespace DataAccessHelper
                 {
                     accessor.Close();
                 }
-                lock(LockObj)
+                lock (LockObj)
                 {
                     // new accessor
                     accessor = new BaseDataAccessor(rules);
@@ -102,7 +103,7 @@ namespace DataAccessHelper
                     DynamicModelCacheKeyFactory.ChangeTableMapping();
                     this.BaseAccessor = accessor;
                 }
-                foreach(var rule in rules)
+                foreach (var rule in rules)
                 {
                     var mapping = GetTableName(rule.MappingType, accessor);
                     ret.Add(mapping);
@@ -124,7 +125,7 @@ namespace DataAccessHelper
         {
             TableMappingRule rule = default(TableMappingRule);
             rule.MappingType = type;
-            rule.Mapper =mapper;
+            rule.Mapper = mapper;
             rule.Condition = condition;
 
             List<TableMappingRule> param = new List<TableMappingRule> { rule };
@@ -204,14 +205,9 @@ namespace DataAccessHelper
         /// <typeparam name="T"></typeparam>
         /// <param name="model"></param>
         /// <returns></returns>
-        public bool AddRecord<T>(T model) where T : class
+        public void AddRecord<T>(T model) where T : class
         {
-            if (BaseAccessor == null)
-            {
-                return false;
-            }
-
-            return BaseAccessor.AddRecord<T>(model);
+            BaseAccessor?.AddRecord<T>(model);
         }
 
         /// <summary>
@@ -263,19 +259,14 @@ namespace DataAccessHelper
         }
 
         /// <summary>
-        /// 删除操作
+        /// 按主键标记实体删除(即使传入的实体不是被追踪的实体，同主键的追踪实体依然会标记删除删除)
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="model"></param>
         /// <returns></returns>
-        public bool Delete<T>(T model) where T : class
+        public void Delete<T>(T model) where T : class
         {
-            if (BaseAccessor == null)
-            {
-                return false;
-            }
-
-            return BaseAccessor.Delete<T>(model);
+            BaseAccessor?.Delete<T>(model);
         }
 
         /// <summary>
@@ -416,9 +407,9 @@ namespace DataAccessHelper
         /// <typeparam name="T"></typeparam>
         /// <param name="model"></param>
         /// <returns></returns>
-        public bool Update<T>(T model) where T : class
+        public void Update<T>(T model) where T : class
         {
-            return BaseAccessor.Update<T>(model);
+            BaseAccessor?.Update<T>(model);
         }
 
         /// <summary>
@@ -429,9 +420,18 @@ namespace DataAccessHelper
         /// <param name="model">更新的实体</param>
         /// <param name="property">要更新的属性, VisualStudio在这里有Bug, 不能智能显示类型属性, 但不影响使用</param>
         /// <returns></returns>
-        public bool Update<T, TProperty>(T model, Expression<Func<T, TProperty>> property) where T : class
+        public void Update<T>(T model, Expression<Func<T, object>> property) where T : class
         {
-            return BaseAccessor.Update(model, property);
+            BaseAccessor?.Update(model, property);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
+        public DbContext GetDbContext()
+        {
+            return BaseAccessor?.GetDbContext();
         }
 
         private TableAccessMapping GetTableName(Type mappingType, BaseDataAccessor helper)

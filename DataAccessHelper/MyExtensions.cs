@@ -1,4 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Storage;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -23,6 +25,18 @@ namespace DataAccessHelper
                     builder.Entity(rule.MappingType).ToTable(tableNm);
                 }
             }
+        }
+
+        /// <summary>
+        /// 根据当前设置的映射规则获取数据库的建表语句
+        /// </summary>
+        /// <param name="accessor">DataAccessor</param>
+        /// <returns>建表语句</returns>
+        public static string GetTableCreateScript(this DataAccessor accessor)
+        {
+            var context = accessor.GetDbContext();
+            var dbCreator = context.GetService<IRelationalDatabaseCreator>();
+            return dbCreator.GenerateCreateScript();
         }
     }
 }

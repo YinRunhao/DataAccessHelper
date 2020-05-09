@@ -15,7 +15,6 @@ namespace Demo
 
             ITableMappable mapper = new PostMapper();
             DataAccessor dal = new DataAccessor();
-
             TestTableName(dal, mapper);
 
             TestChangeTable(dal, mapper);
@@ -24,6 +23,7 @@ namespace Demo
 
             TestChangeDb(dal, mapper);
 
+            TestGetTableSQL(dal, mapper);
             dal.Close();
             Console.WriteLine("Test Finish press any key to exit");
 
@@ -135,6 +135,18 @@ namespace Demo
             PrintData(list);
         }
 
+        static void TestGetTableSQL(DataAccessor dal, ITableMappable mapper)
+        {
+            Console.WriteLine("\nTest Get Db SQL");
+            Console.WriteLine("Original SQL");
+            var sql = dal.GetTableCreateScript();
+            Console.WriteLine(sql);
+            dal.ChangeMappingTable(typeof(Post), mapper, DateTime.Now);
+            Console.WriteLine("New SQL");
+            sql = dal.GetTableCreateScript();
+            Console.WriteLine(sql);
+        }
+
         static void PrintData<T>(List<T> arr)
         {
             foreach (T item in arr)
@@ -156,7 +168,7 @@ namespace Demo
             data.Url = "https://jojo.test.com";
             data.Rating = 2;
             // only update Url, the change of Rating will be ignored
-            dal.Update(data, s => s.Url);
+            dal.Update<Blog>(data, s => s.Url);
             dal.Save();
 
             // 这里需要先关掉再重开，因为EFCore的仓储模式机制，data对象虽然在数据库只更新了Url属性，但它在EFCore的缓存仓里面是改了Url和Rating
