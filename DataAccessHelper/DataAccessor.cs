@@ -16,7 +16,7 @@ namespace DataAccessHelper
     /// <summary>
     /// .NET EF Core框架帮助类
     /// </summary>
-    public class DataAccessor : IDataAccessor, IMappingMutable
+    public class DataAccessor : IDbAccessor
     {
         /// <summary>
         /// 更改映射时的互斥锁
@@ -35,6 +35,7 @@ namespace DataAccessHelper
             BaseDataAccessor.SetContextType(t);
         }
 
+        #region IMappingMutable接口实现
         /// <summary>
         /// 更换数据库, 数据表映射使用默认映射规则
         /// </summary>
@@ -176,7 +177,9 @@ namespace DataAccessHelper
                 throw new ArgumentException("Mapping type not found");
             }
         }
+        #endregion
 
+        #region IDataAccessor接口实现
         /// <summary>
         /// 插入数据
         /// </summary>
@@ -426,13 +429,30 @@ namespace DataAccessHelper
         }
 
         /// <summary>
-        /// 
+        /// 获取EFCore的DbContext
         /// </summary>
-        /// <returns></returns>
+        /// <returns>DbContext</returns>
         public DbContext GetDbContext()
         {
             return BaseAccessor?.GetDbContext();
         }
+        #endregion
+
+        #region IDisposable接口实现
+        /// <summary>
+        /// 释放EFCore的DbContext
+        /// </summary>
+        public void Dispose()
+        {
+            if (BaseAccessor != null)
+            {
+                if (!BaseAccessor.IsClose())
+                {
+                    BaseAccessor.Close();
+                }
+            }
+        }
+        #endregion
 
         private TableAccessMapping GetTableName(Type mappingType, BaseDataAccessor helper)
         {
