@@ -157,16 +157,16 @@ namespace DataAccessHelper
         /// </summary>
         /// <param name="procName">存储过程名</param>
         /// <param name="parameters">参数</param>
-        /// <returns>返回的数据表</returns>
-        DataTable CallProcedure(string procName, params DbParameter[] parameters);
+        /// <returns>返回的数据表集合</returns>
+        List<DataTable> CallProcedure(string procName, params DbParameter[] parameters);
 
         /// <summary>
         /// 执行存储过程，返回存储过程中返回的数据表
         /// </summary>
         /// <param name="procName">存储过程名</param>
         /// <param name="parameters">参数</param>
-        /// <returns>返回的数据表</returns>
-        Task<DataTable> CallProcedureAsync(string procName, params DbParameter[] parameters);
+        /// <returns>返回的数据表集合</returns>
+        Task<List<DataTable>> CallProcedureAsync(string procName, params DbParameter[] parameters);
 
         /// <summary>
         /// 提交对数据进行的处理，如无处理返回-1

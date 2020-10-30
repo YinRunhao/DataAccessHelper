@@ -237,7 +237,7 @@ namespace DataAccessHelper
         /// <param name="procName">存储过程名</param>
         /// <param name="parameters">参数</param>
         /// <returns>返回的数据表</returns>
-        public DataTable CallProcedure(string procName, params DbParameter[] parameters)
+        public List<DataTable> CallProcedure(string procName, params DbParameter[] parameters)
         {
             return BaseAccessor?.CallProcedure(procName, parameters);
         }
@@ -248,7 +248,7 @@ namespace DataAccessHelper
         /// <param name="procName">存储过程名</param>
         /// <param name="parameters">参数</param>
         /// <returns>返回的数据表</returns>
-        public Task<DataTable> CallProcedureAsync(string procName, params DbParameter[] parameters)
+        public Task<List<DataTable>> CallProcedureAsync(string procName, params DbParameter[] parameters)
         {
             return BaseAccessor?.CallProcedureAsync(procName, parameters);
         }

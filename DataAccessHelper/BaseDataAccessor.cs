@@ -348,8 +348,9 @@ namespace DataAccessHelper
         /// <param name="procName">存储过程名</param>
         /// <param name="parameters">参数</param>
         /// <returns>返回的数据表</returns>
-        public DataTable CallProcedure(string procName, params DbParameter[] parameters)
+        public List<DataTable> CallProcedure(string procName, params DbParameter[] parameters)
         {
+            List<DataTable> ret = new List<DataTable>();
             var connection = context.Database.GetDbConnection();
             DbDataReader reader = null;
             DataTable table = null;
@@ -366,10 +367,16 @@ namespace DataAccessHelper
             context.Database.OpenConnection();
             reader = cmd.ExecuteReader();
             table = ReaderToDataTable(reader);
+            ret.Add(table);
+            while (reader.NextResult())
+            {
+                table = ReaderToDataTable(reader);
+                ret.Add(table);
+            }
             reader.Close();
             //context.Database.CloseConnection();
 
-            return table;
+            return ret;
         }
 
         /// <summary>
@@ -378,8 +385,9 @@ namespace DataAccessHelper
         /// <param name="procName">存储过程名</param>
         /// <param name="parameters">参数</param>
         /// <returns>返回的数据表</returns>
-        public async Task<DataTable> CallProcedureAsync(string procName, params DbParameter[] parameters)
+        public async Task<List<DataTable>> CallProcedureAsync(string procName, params DbParameter[] parameters)
         {
+            List<DataTable> ret = new List<DataTable>();
             var connection = context.Database.GetDbConnection();
             DbDataReader reader = null;
             DataTable table = null;
@@ -396,10 +404,16 @@ namespace DataAccessHelper
             await context.Database.OpenConnectionAsync();
             reader = await cmd.ExecuteReaderAsync();
             table = ReaderToDataTable(reader);
+            ret.Add(table);
+            while (reader.NextResult())
+            {
+                table = ReaderToDataTable(reader);
+                ret.Add(table);
+            }
             reader.Close();
             //context.Database.CloseConnection();
 
-            return table;
+            return ret;
         }
 
         /// <summary>
