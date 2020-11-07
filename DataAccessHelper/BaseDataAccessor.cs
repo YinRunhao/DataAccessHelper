@@ -15,46 +15,29 @@ namespace DataAccessHelper
     /// </summary>
     internal class BaseDataAccessor : IDataAccessor
     {
-        private DbContext context;
-        private static Type contextType = null;
+        private ExtendDbContext context;
 
-        /// <summary>
-        /// 使用该类前必须调用此方法指明DbContext类型，若传入的类型不是继承于DbContext，将冒ArgumentException
-        /// </summary>
-        /// <param name="t">Context类型</param>
-        /// <exception cref="ArgumentException">context 类型设置错误</exception>
-        public static void SetContextType(Type t)
+        public static BaseDataAccessor Create(Type tp, ICollection<TableMappingRule> rules)
         {
-            if (t.BaseType != typeof(DbContext))
-            {
-                throw new ArgumentException("ContextType must inherits from DbContext");
-            }
-            else
-            {
-                contextType = t;
-            }
+            ExtendDbContext ctx = Activator.CreateInstance(tp, rules) as ExtendDbContext;
+            BaseDataAccessor ret = new BaseDataAccessor(ctx);
+            return ret;
+        }
+
+        public static BaseDataAccessor Create(Type tp)
+        {
+            ExtendDbContext ctx = Activator.CreateInstance(tp) as ExtendDbContext;
+            BaseDataAccessor ret = new BaseDataAccessor(ctx);
+            return ret;
         }
 
         /// <summary>
-        /// 创建Helper对象，调用前请确保已设定Context类型，若未设定DbContext类型则会冒ArgumentNullException
+        /// 创建Helper对象
         /// </summary>
-        /// <exception cref="ArgumentNullException">context 未设置</exception>
-        public BaseDataAccessor()
+        /// <param name="ctx">EFCore DbContext</param>
+        private BaseDataAccessor(ExtendDbContext ctx)
         {
-            if (contextType == null)
-            {
-                throw new ArgumentNullException("You have not set context type");
-            }
-            context = (DbContext)Activator.CreateInstance(contextType);
-        }
-
-        public BaseDataAccessor(ICollection<TableMappingRule> rules)
-        {
-            if (contextType == null)
-            {
-                throw new ArgumentNullException("You have not set context type");
-            }
-            context = (DbContext)Activator.CreateInstance(contextType, rules);
+            context = ctx;
         }
 
         /// <summary>
@@ -208,13 +191,13 @@ namespace DataAccessHelper
             {
                 var entity = context.Remove(model);
             }
-            catch(InvalidOperationException e)
+            catch (InvalidOperationException e)
             {
                 // 若在追踪列表中已经存在另一个实体和该实体有相同主键(但不是同一个)
                 // 则找到追踪列表里的实体把它标记为删除
                 Type modelType = typeof(T);
-                var key = context.Model.FindEntityType(modelType).FindPrimaryKey();                
-                if(key == null)
+                var key = context.Model.FindEntityType(modelType).FindPrimaryKey();
+                if (key == null)
                 {
                     throw e;
                 }
@@ -224,7 +207,7 @@ namespace DataAccessHelper
                     var props = key.Properties;
                     object[] param = new object[props.Count];
                     int idx = 0;
-                    foreach(var p in props)
+                    foreach (var p in props)
                     {
                         var clrProp = modelType.GetProperty(p.Name);
                         var val = clrProp.GetValue(model);
@@ -233,7 +216,7 @@ namespace DataAccessHelper
                     }
                     // 用主键找实体，标记为删除
                     var cacheModel = context.Set<T>().Find(param);
-                    if(cacheModel!= null)
+                    if (cacheModel != null)
                     {
                         context.Remove(cacheModel);
                     }

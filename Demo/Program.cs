@@ -14,7 +14,7 @@ namespace Demo
             Init();
 
             ITableMappable mapper = new PostMapper();
-            DataAccessor dal = new DataAccessor();
+            DataAccessor dal = DataAccessor.Create<BloggingContext>();
             TestTableName(dal, mapper);
 
             TestChangeTable(dal, mapper);
@@ -36,10 +36,7 @@ namespace Demo
             dbPath = Path.Combine(dbPath, "Blogging.db");
             string conStr = $"Data Source={dbPath}";
 
-            // step 1: Set connect string
             BloggingContext.SetConnectString(conStr);
-            // step 2: Set db context type
-            DataAccessor.SetContextType(typeof(BloggingContext));
         }
 
         static void TestTableName(DataAccessor dal, ITableMappable mapper)
@@ -160,7 +157,7 @@ namespace Demo
         /// </summary>
         private static void TestUpdateProperty()
         {
-            var dal = new DataAccessor();
+            var dal = DataAccessor.Create<BloggingContext>();
             Console.WriteLine("Test update one property");
             var data = dal.GetByID<Blog>((long)1);
             Console.WriteLine("Org data:");
@@ -173,7 +170,7 @@ namespace Demo
 
             // 这里需要先关掉再重开，因为EFCore的仓储模式机制，data对象虽然在数据库只更新了Url属性，但它在EFCore的缓存仓里面是改了Url和Rating
             dal.Close();
-            dal = new DataAccessor();
+            dal = DataAccessor.Create<BloggingContext>();
             var itemFromDb = dal.GetByID<Blog>(data.BlogId);
             Console.WriteLine("New data:");
             Console.WriteLine(itemFromDb);
@@ -181,6 +178,7 @@ namespace Demo
         }
     }
 
+    // step5: 编写你的表名映射规则
     public class PostMapper : ITableMappable
     {
         public string GetMappingTableName(Type modelType, object condition)

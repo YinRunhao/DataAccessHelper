@@ -7,20 +7,20 @@ using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace Demo.Models
 {
-    public partial class BloggingContext : DbContext
+    // step1:派生自ExtendDbContext
+    public partial class BloggingContext : ExtendDbContext
     {
         public virtual DbSet<Blog> Blog { get; set; }
         public virtual DbSet<Post> Post { get; set; }
 
-        private ICollection<TableMappingRule> m_TableMappingRule;
-
+        // step2:实现基类的构造方法，但可以什么都不干
         public BloggingContext()
         {
         }
 
-        public BloggingContext(ICollection<TableMappingRule> rules)
+        // step2:实现基类的构造方法，但可以什么都不干
+        public BloggingContext(ICollection<TableMappingRule> rules):base(rules)
         {
-            this.m_TableMappingRule = rules;
         }
 
         private static string ConnectString
@@ -33,18 +33,18 @@ namespace Demo.Models
             ConnectString = conStr;
         }
 
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        // step3:把重写OnConfiguring的代码移到Configuring方法中进行重写
+        protected override void Configuring(DbContextOptionsBuilder optionsBuilder)
         {
             if (!optionsBuilder.IsConfigured)
             {
-                // setp 0 : Replace Service
                 optionsBuilder.UseSqlite(ConnectString)
-                    .ReplaceService<IModelCacheKeyFactory, DynamicModelCacheKeyFactory>()
                     .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
             }
         }
 
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        // step4:把重写OnModelCreating的代码移到ModelCreating方法中进行重写
+        protected override void ModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Blog>(entity =>
             {
@@ -77,8 +77,6 @@ namespace Demo.Models
                     .WithMany(b => b.Posts)
                     .HasForeignKey(e => e.BlogId);
             });
-            // step 3 Call Extension method
-            modelBuilder.ChangeTableMapping(m_TableMappingRule);
         }
     }
 }

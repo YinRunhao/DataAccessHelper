@@ -25,52 +25,53 @@
         }
     }
 ```
-### 2.重写EFCore中Context的OnConfiguring方法，调用ReplaceService<IModelCacheKeyFactory, DynamicModelCacheKeyFactory>()
+### 2.你的DbContext类需要改动一些代码
+请将你代码中的派生自*DbContext*类改为派生自*ExtendDbContext*，*ExtendDbContext*几乎不会改变任何DbContext的行为。
+
+1. 将你代码中的派生自*DbContext*类改为派生自*ExtendDbContext*
+2. 实现基类的构造方法，但可以什么都不干
+3. 把重写OnConfiguring的代码移到Configuring方法中进行重写
+4. 把重写OnModelCreating的代码移到ModelCreating方法中进行重写
+
 ```
-    public partial class BloggingContext : DbContext
-    {
-        ...
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            if (!optionsBuilder.IsConfigured)
-            {
-                // setp 0 : Replace Service
-                optionsBuilder.UseSqlite(ConnectString)
-                    .ReplaceService<IModelCacheKeyFactory, DynamicModelCacheKeyFactory>();
-            }
-        }
-        ...
-    }
-```
-### 3.设置Context类型
-在程序初始化时调用以下语句设置你程序中的context类型
-```
-DataAccessor.SetContextType(typeof(BloggingContext));
-```
-### 4.(可选)向你的DbContext类添加一些代码
-如果你的在程序中需要用到**动态切换表映射或者动态改变数据库**，这一步则不能跳过；否则可以忽略此步骤。
-```
-    public partial class BloggingContext : DbContext
+    // step1:派生自ExtendDbContext
+    public partial class BloggingContext : ExtendDbContext
     {
         public virtual DbSet<Blog> Blog { get; set; }
         public virtual DbSet<Post> Post { get; set; }
 
-        // 增加映射规则成员变量
-        private ICollection<TableMappingRule> m_TableMappingRule;
-
+        // step2:实现基类的构造方法，但可以什么都不干
         public BloggingContext()
         {
         }
 
-        // 通过构造方法传入
-        public BloggingContext(ICollection<TableMappingRule> rules)
+        // step2:实现基类的构造方法，但可以什么都不干
+        public BloggingContext(ICollection<TableMappingRule> rules):base(rules)
         {
-            this.m_TableMappingRule = rules;
         }
 
-        ...
+        private static string ConnectString
+        {
+            get; set;
+        }
 
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        public static void SetConnectString(string conStr)
+        {
+            ConnectString = conStr;
+        }
+
+        // step3:把重写OnConfiguring的代码移到Configuring方法中进行重写
+        protected override void Configuring(DbContextOptionsBuilder optionsBuilder)
+        {
+            if (!optionsBuilder.IsConfigured)
+            {
+                optionsBuilder.UseSqlite(ConnectString)
+                    .UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
+            }
+        }
+
+        // step4:把重写OnModelCreating的代码移到ModelCreating方法中进行重写
+        protected override void ModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Blog>(entity =>
             {
@@ -83,13 +84,30 @@ DataAccessor.SetContextType(typeof(BloggingContext));
                 entity.Property(e => e.Url).HasColumnType("VARCHAR (1024)");
             });
 
-            ...
-            // 在OnModelCreating方法结束前调用扩展方法ChangeTableMapping，传入数据表映射规则，若规则为空则不会改变任何数据表映射
-            modelBuilder.ChangeTableMapping(m_TableMappingRule);
+            modelBuilder.Entity<Post>(entity =>
+            {
+                entity.HasKey(e => e.PostId);
+
+                entity.ToTable("Post");
+
+                entity.Property(e => e.PostId).ValueGeneratedNever();
+
+                entity.Property(e => e.Content).HasColumnType("VARCHAR (1024)");
+
+                entity.Property(e => e.PostDate)
+                    .IsRequired()
+                    .HasColumnType("DATETIME");
+
+                entity.Property(e => e.Title).HasColumnType("VARCHAR (512)");
+
+                entity.HasOne(e => e.Blog)
+                    .WithMany(b => b.Posts)
+                    .HasForeignKey(e => e.BlogId);
+            });
         }
     }
 ```
-### 5.正式使用
+### 3.正式使用
 ```
     // 使用示例
     static void TestChangeTable(DataAccessor dal, ITableMappable mapper)

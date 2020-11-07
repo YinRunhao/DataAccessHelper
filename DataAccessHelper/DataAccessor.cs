@@ -23,16 +23,25 @@ namespace DataAccessHelper
         /// </summary>
         private static object LockObj = new object();
 
-        private BaseDataAccessor BaseAccessor = new BaseDataAccessor();
+        private BaseDataAccessor m_BaseAccessor;
+
+        private Type m_CtxTp;
 
         /// <summary>
-        /// 使用该类前必须调用此方法指明DbContext类型，若传入的类型不是继承于DbContext，将冒ArgumentException
+        /// 使用指定的DbContext创建一个新的实例
         /// </summary>
-        /// <param name="t">Context类型</param>
-        /// <exception cref="ArgumentException">context 类型设置错误</exception>
-        public static void SetContextType(Type t)
+        /// <typeparam name="T">指定的DbContext</typeparam>
+        /// <returns>新实例</returns>
+        public static DataAccessor Create<T>() where T : ExtendDbContext
         {
-            BaseDataAccessor.SetContextType(t);
+            var accessor = BaseDataAccessor.Create(typeof(T));
+            return new DataAccessor(accessor, typeof(T));
+        }
+
+        private DataAccessor(BaseDataAccessor accessor, Type ctxTp)
+        {
+            m_BaseAccessor = accessor;
+            m_CtxTp = ctxTp;
         }
 
         #region IMappingMutable接口实现
@@ -43,15 +52,15 @@ namespace DataAccessHelper
         public void ChangeDataBase(string connStr)
         {
             // close
-            var accessor = BaseAccessor;
+            var accessor = m_BaseAccessor;
             if (!accessor.IsClose())
             {
                 accessor.Close();
             }
             // new base accessor
-            accessor = new BaseDataAccessor();
+            accessor = BaseDataAccessor.Create(m_CtxTp);
             accessor.GetDbContext().Database.GetDbConnection().ConnectionString = connStr;
-            BaseAccessor = accessor;
+            m_BaseAccessor = accessor;
         }
 
         /// <summary>
@@ -63,7 +72,7 @@ namespace DataAccessHelper
         public void ChangeDataBase(string connStr, List<TableMappingRule> rules)
         {
             // close
-            var accessor = BaseAccessor;
+            var accessor = m_BaseAccessor;
             if (!accessor.IsClose())
             {
                 accessor.Close();
@@ -71,11 +80,11 @@ namespace DataAccessHelper
             lock (LockObj)
             {
                 // new base accessor
-                accessor = new BaseDataAccessor(rules);
+                accessor = BaseDataAccessor.Create(m_CtxTp, rules);
                 // notity new mapping
                 DynamicModelCacheKeyFactory.ChangeTableMapping();
                 accessor.GetDbContext().Database.GetDbConnection().ConnectionString = connStr;
-                BaseAccessor = accessor;
+                m_BaseAccessor = accessor;
             }
         }
 
@@ -91,7 +100,7 @@ namespace DataAccessHelper
             if (rules != null)
             {
                 // close old accessor
-                var accessor = BaseAccessor;
+                var accessor = m_BaseAccessor;
                 if (!accessor.IsClose())
                 {
                     accessor.Close();
@@ -99,10 +108,10 @@ namespace DataAccessHelper
                 lock (LockObj)
                 {
                     // new accessor
-                    accessor = new BaseDataAccessor(rules);
+                    accessor = BaseDataAccessor.Create(m_CtxTp, rules);
                     // notity new mapping
                     DynamicModelCacheKeyFactory.ChangeTableMapping();
-                    this.BaseAccessor = accessor;
+                    this.m_BaseAccessor = accessor;
                 }
                 foreach (var rule in rules)
                 {
@@ -140,7 +149,7 @@ namespace DataAccessHelper
         /// <returns>映射关系集合</returns>
         public List<TableAccessMapping> GetTableNames()
         {
-            BaseDataAccessor helper = BaseAccessor;
+            BaseDataAccessor helper = m_BaseAccessor;
             var context = helper.GetDbContext();
 
             List<TableAccessMapping> ret = new List<TableAccessMapping>();
@@ -163,7 +172,7 @@ namespace DataAccessHelper
         /// <returns>传入实体类的映射关系</returns>
         public TableAccessMapping GetTableName(Type mappingType)
         {
-            BaseDataAccessor helper = BaseAccessor;
+            BaseDataAccessor helper = m_BaseAccessor;
             var context = helper.GetDbContext();
             var model = context.Model.FindEntityType(mappingType);
 
@@ -188,7 +197,7 @@ namespace DataAccessHelper
         /// <returns></returns>
         public T Add<T>(T model) where T : class
         {
-            return BaseAccessor?.Add<T>(model);
+            return m_BaseAccessor?.Add<T>(model);
         }
 
         /// <summary>
@@ -199,7 +208,7 @@ namespace DataAccessHelper
         /// <returns></returns>
         public Task<T> AddAsync<T>(T model) where T : class
         {
-            return BaseAccessor?.AddAsync<T>(model);
+            return m_BaseAccessor?.AddAsync<T>(model);
         }
 
         /// <summary>
@@ -210,7 +219,7 @@ namespace DataAccessHelper
         /// <returns></returns>
         public void AddRecord<T>(T model) where T : class
         {
-            BaseAccessor?.AddRecord<T>(model);
+            m_BaseAccessor?.AddRecord<T>(model);
         }
 
         /// <summary>
@@ -219,7 +228,7 @@ namespace DataAccessHelper
         /// <returns></returns>
         public IDbContextTransaction BeginTransaction()
         {
-            return BaseAccessor?.BeginTransaction();
+            return m_BaseAccessor?.BeginTransaction();
         }
 
         /// <summary>
@@ -228,7 +237,7 @@ namespace DataAccessHelper
         /// <returns></returns>
         public Task<IDbContextTransaction> BeginTransactionAsync()
         {
-            return BaseAccessor?.BeginTransactionAsync();
+            return m_BaseAccessor?.BeginTransactionAsync();
         }
 
         /// <summary>
@@ -239,7 +248,7 @@ namespace DataAccessHelper
         /// <returns>返回的数据表</returns>
         public List<DataTable> CallProcedure(string procName, params DbParameter[] parameters)
         {
-            return BaseAccessor?.CallProcedure(procName, parameters);
+            return m_BaseAccessor?.CallProcedure(procName, parameters);
         }
 
         /// <summary>
@@ -250,7 +259,7 @@ namespace DataAccessHelper
         /// <returns>返回的数据表</returns>
         public Task<List<DataTable>> CallProcedureAsync(string procName, params DbParameter[] parameters)
         {
-            return BaseAccessor?.CallProcedureAsync(procName, parameters);
+            return m_BaseAccessor?.CallProcedureAsync(procName, parameters);
         }
 
         /// <summary>
@@ -258,7 +267,7 @@ namespace DataAccessHelper
         /// </summary>
         public void Close()
         {
-            BaseAccessor?.Close();
+            m_BaseAccessor?.Close();
         }
 
         /// <summary>
@@ -269,7 +278,7 @@ namespace DataAccessHelper
         /// <returns></returns>
         public void Delete<T>(T model) where T : class
         {
-            BaseAccessor?.Delete<T>(model);
+            m_BaseAccessor?.Delete<T>(model);
         }
 
         /// <summary>
@@ -279,7 +288,7 @@ namespace DataAccessHelper
         /// <returns></returns>
         public IQueryable<T> GetAll<T>() where T : class
         {
-            return BaseAccessor?.GetAll<T>();
+            return m_BaseAccessor?.GetAll<T>();
         }
 
         /// <summary>
@@ -290,7 +299,7 @@ namespace DataAccessHelper
         /// <returns>返回主键值为传入值的实体</returns>
         public T GetByID<T>(params object[] values) where T : class
         {
-            return BaseAccessor?.GetByID<T>(values);
+            return m_BaseAccessor?.GetByID<T>(values);
         }
 
         /// <summary>
@@ -301,7 +310,7 @@ namespace DataAccessHelper
         /// <returns>返回主键值为传入值的实体</returns>
         public Task<T> GetByIDAsync<T>(params object[] values) where T : class
         {
-            return BaseAccessor?.GetByIDAsync<T>(values);
+            return m_BaseAccessor?.GetByIDAsync<T>(values);
         }
 
         /// <summary>
@@ -312,7 +321,7 @@ namespace DataAccessHelper
         /// <returns>条目数</returns>
         public int GetCount<T>(Expression<Func<T, bool>> expression) where T : class
         {
-            return BaseAccessor.GetCount<T>(expression);
+            return m_BaseAccessor.GetCount<T>(expression);
         }
 
         /// <summary>
@@ -323,7 +332,7 @@ namespace DataAccessHelper
         /// <returns>条目数</returns>
         public Task<int> GetCountAsync<T>(Expression<Func<T, bool>> expression) where T : class
         {
-            return BaseAccessor.GetCountAsync(expression);
+            return m_BaseAccessor.GetCountAsync(expression);
         }
 
         /// <summary>
@@ -334,7 +343,7 @@ namespace DataAccessHelper
         /// <returns></returns>
         public IQueryable<T> GetMany<T>(Expression<Func<T, bool>> expression) where T : class
         {
-            return BaseAccessor.GetMany<T>(expression);
+            return m_BaseAccessor.GetMany<T>(expression);
         }
 
         /// <summary>
@@ -347,7 +356,7 @@ namespace DataAccessHelper
         /// <returns></returns>
         public List<T> GetPageList<T, Tkey>(int pageSize, int pageIdx, Expression<Func<T, bool>> expression, Func<T, Tkey> orderExpression) where T : class
         {
-            return BaseAccessor?.GetPageList(pageSize, pageIdx, expression, orderExpression);
+            return m_BaseAccessor?.GetPageList(pageSize, pageIdx, expression, orderExpression);
         }
 
         /// <summary>
@@ -361,7 +370,7 @@ namespace DataAccessHelper
         /// <returns>分页查询结果</returns>
         public Task<List<T>> GetPageListAsync<T, Tkey>(int pageSize, int pageIdx, Expression<Func<T, bool>> expression, Func<T, Tkey> orderExpression) where T : class
         {
-            return BaseAccessor?.GetPageListAsync(pageSize, pageIdx, expression, orderExpression);
+            return m_BaseAccessor?.GetPageListAsync(pageSize, pageIdx, expression, orderExpression);
         }
 
         /// <summary>
@@ -370,7 +379,7 @@ namespace DataAccessHelper
         /// <returns></returns>
         public bool IsClose()
         {
-            return BaseAccessor.IsClose();
+            return m_BaseAccessor.IsClose();
         }
 
         /// <summary>
@@ -383,7 +392,7 @@ namespace DataAccessHelper
         /// <returns></returns>
         public IEnumerable<T> Order<T, TKey>(Func<T, TKey> orderExpression, bool isASC = false) where T : class
         {
-            return BaseAccessor?.Order(orderExpression, isASC);
+            return m_BaseAccessor?.Order(orderExpression, isASC);
         }
 
         /// <summary>
@@ -392,7 +401,7 @@ namespace DataAccessHelper
         /// <returns></returns>
         public int Save()
         {
-            return BaseAccessor.Save();
+            return m_BaseAccessor.Save();
         }
 
         /// <summary>
@@ -401,7 +410,7 @@ namespace DataAccessHelper
         /// <returns></returns>
         public Task<int> SaveAsync()
         {
-            return BaseAccessor.SaveAsync();
+            return m_BaseAccessor.SaveAsync();
         }
 
         /// <summary>
@@ -412,7 +421,7 @@ namespace DataAccessHelper
         /// <returns></returns>
         public void Update<T>(T model) where T : class
         {
-            BaseAccessor?.Update<T>(model);
+            m_BaseAccessor?.Update<T>(model);
         }
 
         /// <summary>
@@ -425,7 +434,7 @@ namespace DataAccessHelper
         /// <returns></returns>
         public void Update<T>(T model, Expression<Func<T, object>> property) where T : class
         {
-            BaseAccessor?.Update(model, property);
+            m_BaseAccessor?.Update(model, property);
         }
 
         /// <summary>
@@ -434,7 +443,7 @@ namespace DataAccessHelper
         /// <returns>DbContext</returns>
         public DbContext GetDbContext()
         {
-            return BaseAccessor?.GetDbContext();
+            return m_BaseAccessor?.GetDbContext();
         }
         #endregion
 
@@ -444,11 +453,11 @@ namespace DataAccessHelper
         /// </summary>
         public void Dispose()
         {
-            if (BaseAccessor != null)
+            if (m_BaseAccessor != null)
             {
-                if (!BaseAccessor.IsClose())
+                if (!m_BaseAccessor.IsClose())
                 {
-                    BaseAccessor.Close();
+                    m_BaseAccessor.Close();
                 }
             }
         }
