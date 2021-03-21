@@ -13,7 +13,7 @@ namespace DataAccessHelper
     /// <summary>
     /// .NET EF Core框架帮助基础类
     /// </summary>
-    internal class BaseDataAccessor : IDataAccessor
+    internal class BaseDataAccessor : IEFAvailable
     {
         private ExtendDbContext context;
 
@@ -116,22 +116,16 @@ namespace DataAccessHelper
         public T Add<T>(T model) where T : class
         {
             T retModel;
-
-            try
+            if (model != null)
             {
-                if (model != null)
-                {
-                    context.Set<T>().Add(model);
-                    context.SaveChanges();
-                    retModel = model;
-                }
-                else
-                    retModel = null;
+                context.Set<T>().Add(model);
+                context.SaveChanges();
+                retModel = model;
             }
-            catch (Exception)
+            else
             {
                 retModel = null;
-            }
+            }                
 
             return retModel;
         }
@@ -146,18 +140,13 @@ namespace DataAccessHelper
         {
             T retModel;
 
-            try
+            if (model != null)
             {
-                if (model != null)
-                {
-                    context.Set<T>().Add(model);
-                    await context.SaveChangesAsync();
-                    retModel = model;
-                }
-                else
-                    retModel = null;
+                context.Set<T>().Add(model);
+                await context.SaveChangesAsync();
+                retModel = model;
             }
-            catch (Exception)
+            else
             {
                 retModel = null;
             }

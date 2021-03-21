@@ -4,12 +4,14 @@ using System.Linq;
 using System.Collections.Generic;
 using Demo.Models;
 using DataAccessHelper;
+using DataAccessHelper.Extensions.Dapper;
+using System.Threading.Tasks;
 
 namespace Demo
 {
     class Program
     {
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
             Init();
 
@@ -24,6 +26,10 @@ namespace Demo
             TestChangeDb(dal, mapper);
 
             TestGetTableSQL(dal, mapper);
+
+            await TestSqlQueryAsync(dal);
+
+            await TestSqlExecuteAsync(dal);
             dal.Close();
             Console.WriteLine("Test Finish press any key to exit");
 
@@ -144,7 +150,38 @@ namespace Demo
             Console.WriteLine(sql);
         }
 
-        static void PrintData<T>(List<T> arr)
+        static async Task TestSqlQueryAsync(DataAccessor dal)
+        {
+            Console.WriteLine("\nTest Get SQL Query without transaction");
+            string sql = "select * from Blog;";
+            // 不带事务
+            var data = await dal.SqlQueryAsync<Blog>(sql);
+
+            PrintData(data);
+            // 带事务
+            var tran = await dal.BeginTransactionAsync();
+            // 将自动填装上事务
+            data = await dal.SqlQueryAsync<Blog>(sql);
+            Console.WriteLine("\nTest Get SQL Query with transaction");
+            PrintData(data);
+            await tran.CommitAsync();
+        }
+
+        static async Task TestSqlExecuteAsync(DataAccessor dal)
+        {
+            Console.WriteLine("\nTest Get SQL Execute");
+            long testId = 1;
+            string sql = "update Blog set Rating=0 where BlogId={0}";
+            var tran = await dal.BeginTransactionAsync();
+            Console.WriteLine($"\nExecute SQL : {sql}");
+            int effect = await dal.ExecuteSqlRawAsync(sql, testId);
+            Console.WriteLine($"\nEffect rows : {effect}");
+            await tran.RollbackAsync();
+            var record = await dal.GetByIDAsync<Blog>(testId);
+            Console.WriteLine($"After rollabck:{record}");
+        }
+
+        static void PrintData<T>(IEnumerable<T> arr)
         {
             foreach (T item in arr)
             {

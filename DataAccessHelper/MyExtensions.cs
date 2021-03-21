@@ -4,6 +4,8 @@ using Microsoft.EntityFrameworkCore.Storage;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Data.Common;
+using System.Threading.Tasks;
 
 namespace DataAccessHelper
 {
@@ -32,11 +34,25 @@ namespace DataAccessHelper
         /// </summary>
         /// <param name="accessor">DataAccessor</param>
         /// <returns>建表语句</returns>
-        public static string GetTableCreateScript(this DataAccessor accessor)
+        public static string GetTableCreateScript(this IDbAccessor accessor)
         {
             var context = accessor.GetDbContext();
             var dbCreator = context.GetService<IRelationalDatabaseCreator>();
             return dbCreator.GenerateCreateScript();
+        }
+
+        /// <summary>
+        /// 执行SQL语句，参数用法可参考ExecuteSqlRawAsync方法
+        /// </summary>
+        /// <remarks>例:"update tbUser set Name='HaHa' where Id={0}"</remarks>
+        /// <param name="accessor"></param>
+        /// <param name="sql">SQL语句</param>
+        /// <param name="parameters">参数</param>
+        /// <returns>受影响行数</returns>
+        public static Task<int> ExecuteSqlRawAsync(this IDbAccessor accessor, string sql, params object[] parameters)
+        {
+            var context = accessor.GetDbContext();
+            return context.Database.ExecuteSqlRawAsync(sql, parameters);
         }
     }
 }

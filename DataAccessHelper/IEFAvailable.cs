@@ -10,9 +10,9 @@ using Microsoft.EntityFrameworkCore.Storage;
 namespace DataAccessHelper
 {
     /// <summary>
-    /// 数据接入层接口
+    /// EF相关方法
     /// </summary>
-    public interface IDataAccessor
+    public interface IEFAvailable
     {
         /// <summary>
         /// 是否已关闭

@@ -10,6 +10,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\DataAccessHelper.Extension.Dapper\DataAccessHelper.Extensions.Dapper.csproj" />
     <ProjectReference Include="..\DataAccessHelper\DataAccessHelper.csproj" />
   </ItemGroup>
 
