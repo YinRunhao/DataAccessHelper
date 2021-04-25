@@ -190,6 +190,16 @@ namespace DataAccessHelper
 
         #region IDataAccessor接口实现
         /// <summary>
+        /// 获取某个表的Queryable
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        public IQueryable<T> GetQueryable<T>() where T : class
+        {
+            return m_BaseAccessor.GetQueryable<T>();
+        }
+
+        /// <summary>
         /// 插入数据
         /// </summary>
         /// <typeparam name="T"></typeparam>

@@ -26,6 +26,13 @@ namespace DataAccessHelper
         void Close();
 
         /// <summary>
+        /// 获取某个表的Queryable
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        IQueryable<T> GetQueryable<T>() where T : class;
+
+        /// <summary>
         /// 获取某个表的所有数据
         /// </summary>
         /// <typeparam name="T"></typeparam>

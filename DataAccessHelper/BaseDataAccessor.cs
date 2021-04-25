@@ -62,6 +62,17 @@ namespace DataAccessHelper
         }
 
         /// <summary>
+        /// 获取某个表的Queryable
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <returns></returns>
+        public IQueryable<T> GetQueryable<T>() where T : class
+        {
+            var query = context.Set<T>().AsQueryable();
+            return query;
+        }
+
+        /// <summary>
         /// 获取某个表的所有数据
         /// </summary>
         /// <typeparam name="T"></typeparam>
